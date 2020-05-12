@@ -17,7 +17,7 @@ process cut_adapters {
     
     cpus 1 /* more is better, parallelizes quiet well*/
     memory '1 GB' 
-    /*container '###'*/
+    container 'alexeyebi/ena-sars-cov2-nanopore:latest'
     
     input:
     path input_file from '/home/dnieuwenhuijse/Projects/SARS-CoV-2/nanopore_nextflow/input.fastq'
@@ -38,7 +38,7 @@ process map_to_reference {
 
     cpus 1 /* more is better, parallelizes very well*/
     memory '1 GB'
-    /*container '###'*/
+    container 'alexeyebi/ena-sars-cov2-nanopore:latest'
     
     input:
     path trimmed
@@ -60,7 +60,7 @@ process create_consensus {
 
     cpus 1
     memory '1 GB'
-    /*container '###'*/
+    container 'alexeyebi/ena-sars-cov2-nanopore:latest'
     
     input:
     path mapped
@@ -83,7 +83,7 @@ process align_consensus {
 
     cpus 1 /* doesn't benefit from more cores*/
     memory '1 GB'
-    /*container '###'*/
+    container 'alexeyebi/ena-sars-cov2-nanopore:latest'
     
     input:
     path consensus
