@@ -5,22 +5,20 @@
  * barcodes to be checked in the demultiplexing process and the coverage
  * thresholds set for the consensus calling
  */
- 
-params.REFERENCE = '/home/dnieuwenhuijse/Projects/SARS-CoV-2/nanopore_nextflow/reference.fasta'
+
 params.COVERAGE = 30
-params.NAME = "consensus_test"
 
 /*
  * Trim 30 nucleotides of each end of the reads using cutadapt to ensure that primer derived sequences are not used to generate a consensus sequence
  */  
 process cut_adapters {
     
-    cpus 1 /* more is better, parallelizes quiet well*/
-    memory '1 GB' 
-    container 'alexeyebi/ena-sars-cov2-nanopore:latest'
+    cpus 19 /* more is better, parallelizes quiet well*/
+    memory '1 GB'
+    container 'biocontainers/cutadapt'
     
     input:
-    path input_file from '/home/dnieuwenhuijse/Projects/SARS-CoV-2/nanopore_nextflow/input.fastq'
+    path input_file from params.INPUT
     
     output:
     path 'trimmed.fastq' into trimmed
@@ -36,9 +34,9 @@ process cut_adapters {
  */ 
 process map_to_reference {
 
-    cpus 1 /* more is better, parallelizes very well*/
+    cpus 19 /* more is better, parallelizes very well*/
     memory '1 GB'
-    container 'alexeyebi/ena-sars-cov2-nanopore:latest'
+    container 'alexeyebi/ena-sars-cov2-nanopore'
     
     input:
     path trimmed
@@ -60,7 +58,7 @@ process create_consensus {
 
     cpus 1
     memory '1 GB'
-    container 'alexeyebi/ena-sars-cov2-nanopore:latest'
+    container 'alexeyebi/ena-sars-cov2-nanopore'
     
     input:
     path mapped
@@ -81,17 +79,20 @@ process create_consensus {
  */ 
 process align_consensus {
 
+    publishDir params.outdir, mode:'copy'
     cpus 1 /* doesn't benefit from more cores*/
-    memory '1 GB'
-    container 'alexeyebi/ena-sars-cov2-nanopore:latest'
+    memory '10 GB'
+    container 'alexeyebi/ena-sars-cov2-nanopore'
     
     input:
     path consensus
     path ref from params.REFERENCE
-    val name from params.NAME
+
+    output:
+    path('results.fasta')
     
     script:
     """
-    align_to_ref.py -i ${consensus} -o consensus.fasta -r ${ref} -n 'consensus'
+    align_to_ref.py -i ${consensus} -o results.fasta -r ${ref} -n params.NAME
     """
 }
