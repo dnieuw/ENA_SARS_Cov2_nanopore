@@ -15,7 +15,7 @@ process cut_adapters {
     
     cpus 19 /* more is better, parallelizes quiet well*/
     memory '1 GB'
-    container 'biocontainers/cutadapt'
+    container 'kfdrc/cutadapt'
     
     input:
     path input_file from params.INPUT
