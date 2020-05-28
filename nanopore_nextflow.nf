@@ -87,12 +87,13 @@ process align_consensus {
     input:
     path consensus
     path ref from params.REFERENCE
+    val name from params.NAME
 
     output:
     path('results.fasta')
     
     script:
     """
-    align_to_ref.py -i ${consensus} -o results.fasta -r ${ref} -n params.NAME
+    align_to_ref.py -i ${consensus} -o results.fasta -r ${ref} -n ${name}
     """
 }
