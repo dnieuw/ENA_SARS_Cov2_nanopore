@@ -7,8 +7,8 @@
  */
 
 params.COVERAGE = 30
-params.STARTED = "pipeline started"
-params.FINISHED = "pipeline finished"
+params.STARTED = "pipeline_started"
+params.FINISHED = "pipeline_finished"
 
 /*
  * Report to mongodb that pipeline started

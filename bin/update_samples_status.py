@@ -17,6 +17,8 @@ def main():
 if __name__ == "__main__":
     # Get run name from command line
     RUN = sys.argv[1]
+    if '_' in RUN:
+        RUN = RUN.split('_')[0]
 
     # Get status from command line
     STATUS = sys.argv[2]
