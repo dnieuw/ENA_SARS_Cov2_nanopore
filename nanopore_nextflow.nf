@@ -90,7 +90,7 @@ process create_consensus {
     script:
     """
     samtools index -@ ${task.cpus} ${mapped}
-    bam2consensus.py -i ${mapped} -o consensus.fasta -d ${cov}
+    bam2consensus.py -i ${mapped} -o consensus.fasta -d ${cov} -g 1
     """
 }
 
