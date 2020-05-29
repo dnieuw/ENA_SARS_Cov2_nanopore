@@ -7,6 +7,25 @@
  */
 
 params.COVERAGE = 30
+/*
+ * Report to mongodb that pipeline started
+ */
+ process report_pipeline_started {
+     cpus 1
+     memory '1 GB'
+     container 'alexeyebi/ena-sars-cov2-nanopore'
+
+     input:
+     val name from params.NAME
+
+     output:
+     path 'pipeline_started.log' into pipeline_started_ch
+
+     script:
+     """
+     update_samples_status.py  ${name} 'pipeline started'
+     """
+ }
 
 /*
  * Trim 30 nucleotides of each end of the reads using cutadapt to ensure that primer derived sequences are not used to generate a consensus sequence
@@ -19,6 +38,7 @@ process cut_adapters {
     
     input:
     path input_file from params.INPUT
+    path pipeline_started.log from pipeline_started_ch
     
     output:
     path 'trimmed.fastq' into trimmed
@@ -95,5 +115,6 @@ process align_consensus {
     script:
     """
     align_to_ref.py -i ${consensus} -o results.fasta -r ${ref} -n ${name}
+    update_samples_status.py  ${name} 'pipeline finished'
     """
 }
