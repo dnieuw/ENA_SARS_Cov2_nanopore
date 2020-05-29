@@ -7,8 +7,8 @@
  */
 
 params.COVERAGE = 30
-params.STARTED = 'pipeline started'
-params.FINISHED = 'pipeline finished'
+params.STARTED = "pipeline started"
+params.FINISHED = "pipeline finished"
 
 /*
  * Report to mongodb that pipeline started
@@ -27,7 +27,7 @@ params.FINISHED = 'pipeline finished'
 
      script:
      """
-     update_samples_status.py  ${name} ${status}
+     update_samples_status.py ${name} ${status}
      touch pipeline_started.log
      """
  }
@@ -43,7 +43,7 @@ process cut_adapters {
     
     input:
     path input_file from params.INPUT
-    path pipeline_started.log from pipeline_started_ch
+    path pipeline_started from pipeline_started_ch
     
     output:
     path 'trimmed.fastq' into trimmed
@@ -121,6 +121,6 @@ process align_consensus {
     script:
     """
     align_to_ref.py -i ${consensus} -o results.fasta -r ${ref} -n ${name}
-    update_samples_status.py  ${name} ${status}
+    update_samples_status.py ${name} ${status}
     """
 }
