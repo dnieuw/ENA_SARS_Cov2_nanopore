@@ -7,6 +7,9 @@
  */
 
 params.COVERAGE = 30
+params.STARTED = 'pipeline started'
+params.FINISHED = 'pipeline finished'
+
 /*
  * Report to mongodb that pipeline started
  */
@@ -17,13 +20,14 @@ params.COVERAGE = 30
 
      input:
      val name from params.NAME
+     val status from params.STARTED
 
      output:
      path 'pipeline_started.log' into pipeline_started_ch
 
      script:
      """
-     update_samples_status.py  ${name} 'pipeline started'
+     update_samples_status.py  ${name} ${status}
      touch pipeline_started.log
      """
  }
@@ -109,6 +113,7 @@ process align_consensus {
     path consensus
     path ref from params.REFERENCE
     val name from params.NAME
+    val status from params.FINISHED
 
     output:
     path('results.fasta')
@@ -116,6 +121,6 @@ process align_consensus {
     script:
     """
     align_to_ref.py -i ${consensus} -o results.fasta -r ${ref} -n ${name}
-    update_samples_status.py  ${name} 'pipeline finished'
+    update_samples_status.py  ${name} ${status}
     """
 }
