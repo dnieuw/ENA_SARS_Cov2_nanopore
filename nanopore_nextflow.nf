@@ -24,6 +24,7 @@ params.COVERAGE = 30
      script:
      """
      update_samples_status.py  ${name} 'pipeline started'
+     touch pipeline_started.log
      """
  }
 
