@@ -9,8 +9,10 @@
 params.COVERAGE = 30
 params.PIPELINE_STARTED = "pipeline_started"
 params.PIPELINE_FINISHED = "pipeline_finished"
+params.PIPELINE_FIELD = "pipeline_analysis"
 params.EXPORT_STARTED = "export_started"
 params.EXPORT_FINISHED = "export_finished"
+params.EXPORT_FIELD = "export_to_ena"
 
 /*
  * Report to mongodb that pipeline started
@@ -23,13 +25,14 @@ params.EXPORT_FINISHED = "export_finished"
      input:
      val run_id from params.RUN
      val status from params.PIPELINE_STARTED
+     val field from params.PIPELINE_FIELD
 
      output:
      path 'pipeline_started.log' into pipeline_started_ch
 
      script:
      """
-     update_samples_status.py ${run_id} ${status}
+     update_samples_status.py ${run_id} ${status} ${field}
      touch pipeline_started.log
      """
  }
@@ -113,6 +116,7 @@ process align_consensus {
     val name from params.NAME
     val status from params.PIPELINE_FINISHED
     val run_id from params.RUN
+    val field from params.PIPELINE_FIELD
 
     output:
     path "${run_id}.fasta.gz" into align_consensus_ch
@@ -121,7 +125,7 @@ process align_consensus {
     """
     align_to_ref.py -i ${consensus} -o ${run_id}.fasta -r ${ref} -n ${name}
     gzip ${run_id}.fasta
-    update_samples_status.py ${run_id} ${status}
+    update_samples_status.py ${run_id} ${status} ${field}
     """
 }
 
@@ -141,6 +145,7 @@ process upload_files_to_ena {
     val status from params.EXPORT_STARTED
     val user from params.USER
     val password from params.PASSWORD
+    val field from params.EXPORT_FIELD
 
     output:
     path 'files_uploaded_to_ena.log' into files_uploaded_to_ena_ch
@@ -148,7 +153,7 @@ process upload_files_to_ena {
 
     script:
     """
-    update_samples_status.py ${run_id} ${status}
+    update_samples_status.py ${run_id} ${status} ${field}
     curl -T ${bam} ftp://webin.ebi.ac.uk --user ${user}:${password}
     curl -T ${consensus} ftp://webin.ebi.ac.uk --user ${user}:${password}
     touch files_uploaded_to_ena.log
@@ -224,13 +229,14 @@ process create_analysis_xml {
       path consensus_sequence_submission_xml from create_consensus_sequence_submission_xml_ch
       val user from params.USER
       val password from params.PASSWORD
+      val field from params.EXPORT_FIELD
 
 
       script:
       """
       submit_xml_files_to_ena.py ${alignment_submission_xml} ${alignment_analysis_xml} ${user} ${password}
       submit_xml_files_to_ena.py ${consensus_sequence_submission_xml} ${consensus_sequence_analysis_xml} ${user} ${password}
-      update_samples_status.py ${run_id} ${status}
+      update_samples_status.py ${run_id} ${status} ${field}
       """
   }
 
