@@ -21,7 +21,7 @@ params.EXPORT_FINISHED = "export_finished"
      container 'alexeyebi/ena-sars-cov2-nanopore'
 
      input:
-     val run_id from params.FILENAME
+     val run_id from params.RUN
      val status from params.PIPELINE_STARTED
 
      output:
