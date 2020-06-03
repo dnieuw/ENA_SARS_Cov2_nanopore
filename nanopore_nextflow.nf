@@ -130,6 +130,10 @@ process align_consensus {
  * Upload BAM file to ENA ftp
  */
 process upload_files_to_ena {
+    cpus 1
+    memory '1 GB'
+    container 'alexeyebi/ena-sars-cov2-nanopore'
+
     input:
     path consensus from align_consensus_ch
     path bam from mapped_ch2
