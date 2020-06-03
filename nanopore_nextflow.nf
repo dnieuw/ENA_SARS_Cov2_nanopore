@@ -38,7 +38,6 @@ params.EXPORT_FINISHED = "export_finished"
  * Trim 30 nucleotides of each end of the reads using cutadapt to ensure that primer derived sequences are not used to generate a consensus sequence
  */  
 process cut_adapters {
-    
     cpus 19 /* more is better, parallelizes quiet well*/
     memory '1 GB'
     container 'kfdrc/cutadapt'
@@ -60,7 +59,6 @@ process cut_adapters {
  * Map reads to SARS-CoV-2 reference genome
  */ 
 process map_to_reference {
-
     cpus 19 /* more is better, parallelizes very well*/
     memory '1 GB'
     container 'alexeyebi/ena-sars-cov2-nanopore'
@@ -83,7 +81,6 @@ process map_to_reference {
  * Generate consensus genome from mapped reads
  */ 
 process create_consensus {
-
     cpus 1
     memory '1 GB'
     container 'alexeyebi/ena-sars-cov2-nanopore'
@@ -106,7 +103,6 @@ process create_consensus {
  * Align consensus with reference to keep coordinates the same
  */ 
 process align_consensus {
-
     cpus 1 /* doesn't benefit from more cores*/
     memory '10 GB'
     container 'alexeyebi/ena-sars-cov2-nanopore'
@@ -134,7 +130,6 @@ process align_consensus {
  * Upload BAM file to ENA ftp
  */
 process upload_files_to_ena {
-
     input:
     path consensus from align_consensus_ch
     path bam from mapped_ch2
@@ -161,7 +156,6 @@ process upload_files_to_ena {
  * Create analysis xml file, required for ENA submission
  */
 process create_analysis_xml {
-
     cpus 1
     memory '1 GB'
     container 'alexeyebi/ena-sars-cov2-nanopore'
@@ -189,7 +183,6 @@ process create_analysis_xml {
  * Create submission xml file, required for ENA submission
  */
  process create_submission_xml {
-     publishDir params.outdir, mode:'copy'
      cpus 1
      memory '1 GB'
      container 'alexeyebi/ena-sars-cov2-nanopore'
