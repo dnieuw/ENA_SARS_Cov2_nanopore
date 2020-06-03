@@ -10,7 +10,7 @@ from analysis_xml import AnalysisXML
 
 
 def main():
-    sample = DB.samples.find_one({'id': FILENAME})
+    sample = DB.samples.find_one({'id': FILENAME.split(".")[0]})
     md5 = check_md5_values()
     create_analysis_xml(sample, md5)
 
