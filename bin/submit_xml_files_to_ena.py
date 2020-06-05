@@ -7,7 +7,6 @@ from lxml import etree
 
 
 def main():
-    # write_sample_status(sample, 'starting to submit xml files to ENA')
     command = f'curl -k  -F "SUBMISSION=@{SUBMISSION_XML}" ' \
               f'-F "ANALYSIS=@{ANALYSIS_XML}" ' \
               f'"{ANALYSIS_SUBMISSION_URL_DEV}%20{USER}%20{PASSWORD}"'
@@ -22,14 +21,9 @@ def main():
             for mess in messages.findall('ERROR'):
                 submission_error_messages.append('ERROR:' + mess.text)
     if len(submission_error_messages) > 0:
-        # write_sample_errors(sample, submission_error_messages)
-        # write_sample_status(sample, 'submission to ENA failed')
         for message in submission_error_messages:
             print(message)
         sys.exit(1)
-    else:
-        # write_sample_status(sample, 'submission to ENA finished')
-        pass
 
 
 if __name__ == "__main__":
