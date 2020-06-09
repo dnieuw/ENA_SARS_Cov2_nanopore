@@ -63,7 +63,7 @@ process cut_adapters {
  */ 
 process map_to_reference {
     cpus 19 /* more is better, parallelizes very well*/
-    memory '1 GB'
+    memory '10 GB'
     container 'alexeyebi/ena-sars-cov2-nanopore'
     
     input:
