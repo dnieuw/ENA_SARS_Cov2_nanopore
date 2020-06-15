@@ -131,7 +131,7 @@ process align_consensus {
     script:
     """
     align_to_ref.py -i ${consensus} -o ${run_id}.fasta -r ${ref} -n ${name}
-    gzip ${run_id}.fasta
+    gzip -k ${run_id}.fasta
     update_samples_status.py ${run_id} ${status} ${field}
     """
 }
