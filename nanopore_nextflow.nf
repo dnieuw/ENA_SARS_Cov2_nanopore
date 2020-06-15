@@ -13,6 +13,7 @@ params.PIPELINE_FIELD = "pipeline_analysis"
 params.EXPORT_STARTED = "export_started"
 params.EXPORT_FINISHED = "export_finished"
 params.EXPORT_FIELD = "export_to_ena"
+params.OUTDIR = "results"
 
 /*
  * Report to mongodb that pipeline started
@@ -62,6 +63,8 @@ process cut_adapters {
  * Map reads to SARS-CoV-2 reference genome
  */ 
 process map_to_reference {
+    publishDir params.OUTDIR, mode:'copy'
+
     cpus 19 /* more is better, parallelizes very well*/
     memory '10 GB'
     container 'alexeyebi/ena-sars-cov2-nanopore'
@@ -73,6 +76,7 @@ process map_to_reference {
     
     output:
     path "${run_id}.bam" into mapped_ch1, mapped_ch2, mapped_ch3
+    path("${run_id}.bam")
     
     script:
     """
@@ -106,6 +110,8 @@ process create_consensus {
  * Align consensus with reference to keep coordinates the same
  */ 
 process align_consensus {
+    publishDir params.OUTDIR, mode:'copy'
+
     cpus 1 /* doesn't benefit from more cores*/
     memory '10 GB'
     container 'alexeyebi/ena-sars-cov2-nanopore'
@@ -120,6 +126,7 @@ process align_consensus {
 
     output:
     path "${run_id}.fasta.gz" into align_consensus_ch
+    path("${run_id}.fasta")
     
     script:
     """
