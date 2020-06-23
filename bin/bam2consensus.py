@@ -79,6 +79,12 @@ def makeConsensus(bamfile, covlim):
                     else:
                         continue #If there is a deletion in the mapping we continue without printing a nucleotide
                 consensus.append(best)
+            
+            #Deal with gaps at the end of the sequence
+            if (bamfile.get_reference_length(ref) != prevpos and args.keepgap == 1):
+                gapsize = bamfile.get_reference_length(ref) - prevpos - 1
+                consensus.append('N'*gapsize)
+            
             if len(consensus) == 0:
                 continue
             all_ref.append('>'+ref+'_consensus\n'+''.join(consensus))
