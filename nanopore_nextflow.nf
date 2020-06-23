@@ -33,7 +33,6 @@ params.OUTDIR = "results"
 
      script:
      """
-     update_samples_status.py ${run_id} ${status} ${field}
      touch pipeline_started.log
      """
  }
@@ -132,119 +131,5 @@ process align_consensus {
     """
     align_to_ref.py -i ${consensus} -o ${run_id}.fasta -r ${ref} -n ${name}
     gzip -k ${run_id}.fasta
-    update_samples_status.py ${run_id} ${status} ${field}
     """
 }
-
-
-/*
- * Upload BAM file to ENA ftp
- */
-process upload_files_to_ena {
-    cpus 1
-    memory '1 GB'
-    container 'alexeyebi/ena-sars-cov2-nanopore'
-
-    input:
-    path consensus from align_consensus_ch
-    path bam from mapped_ch2
-    val run_id from params.RUN
-    val status from params.EXPORT_STARTED
-    val user from params.USER
-    val password from params.PASSWORD
-    val field from params.EXPORT_FIELD
-
-    output:
-    path 'files_uploaded_to_ena.log' into files_uploaded_to_ena_ch
-    path "${consensus}" into gzip_consensus_ch
-
-    script:
-    """
-    update_samples_status.py ${run_id} ${status} ${field}
-    curl -T ${bam} ftp://webin.ebi.ac.uk --user ${user}:${password}
-    curl -T ${consensus} ftp://webin.ebi.ac.uk --user ${user}:${password}
-    touch files_uploaded_to_ena.log
-    """
-}
-
-
-/*
- * Create analysis xml file, required for ENA submission
- */
-process create_analysis_xml {
-    cpus 1
-    memory '1 GB'
-    container 'alexeyebi/ena-sars-cov2-nanopore'
-
-    input:
-    path files_uploaded_to_ena from files_uploaded_to_ena_ch
-    path bam from mapped_ch3
-    path consensus from gzip_consensus_ch
-    val run_id from params.RUN
-    val user from params.USER
-    val password from params.PASSWORD
-
-    output:
-    path "${run_id}_alignment_analysis.xml" into create_alignment_analysis_xml_ch1, create_alignment_analysis_xml_ch2
-    path "${run_id}_consensus_sequence_analysis.xml" into create_consensus_sequence_analysis_xml_ch1, create_consensus_sequence_analysis_xml_ch2
-
-    script:
-    """
-    create_analysis_xml.py ${bam} ${user} ${password}
-    create_analysis_xml.py ${consensus} ${user} ${password}
-    """
-}
-
-/*
- * Create submission xml file, required for ENA submission
- */
- process create_submission_xml {
-     cpus 1
-     memory '1 GB'
-     container 'alexeyebi/ena-sars-cov2-nanopore'
-
-     input:
-     val run_id from params.RUN
-     path alignment_analysis_xml from create_alignment_analysis_xml_ch1
-     path consensus_sequence_analysis_xml from create_consensus_sequence_analysis_xml_ch1
-
-     output:
-     path "${run_id}_alignment_submission.xml" into create_alignment_submission_xml_ch
-     path "${run_id}_consensus_sequence_submission.xml" into create_consensus_sequence_submission_xml_ch
-
-     script:
-     """
-     create_submission_xml.py ${alignment_analysis_xml}
-     create_submission_xml.py ${consensus_sequence_analysis_xml}
-     """
- }
-
- /*
-  * Submit xml files to ena
-  */
-  process submit_xml_files_to_ena {
-      cpus 1
-      memory '1 GB'
-      container 'alexeyebi/ena-sars-cov2-nanopore'
-
-      input:
-      val run_id from params.RUN
-      val status from params.EXPORT_FINISHED
-      path alignment_analysis_xml from create_alignment_analysis_xml_ch2
-      path alignment_submission_xml from create_alignment_submission_xml_ch
-      path consensus_sequence_analysis_xml from create_consensus_sequence_analysis_xml_ch2
-      path consensus_sequence_submission_xml from create_consensus_sequence_submission_xml_ch
-      val user from params.USER
-      val password from params.PASSWORD
-      val field from params.EXPORT_FIELD
-
-
-      script:
-      """
-      submit_xml_files_to_ena.py ${alignment_submission_xml} ${alignment_analysis_xml} ${user} ${password}
-      submit_xml_files_to_ena.py ${consensus_sequence_submission_xml} ${consensus_sequence_analysis_xml} ${user} ${password}
-      update_samples_status.py ${run_id} ${status} ${field}
-      """
-  }
-
-
