@@ -96,7 +96,7 @@ def makeConsensus(bamfile, covlim):
             if args.seq_name == None:
                 all_ref.append('>'+ref+'_consensus\n'+''.join(consensus))
             else:
-                all_ref.append('>'+args.seq_name+''.join(consensus))
+                all_ref.append('>'+args.seq_name+'\n'.join(consensus))
                 
         return('\n'.join(all_ref))
 
