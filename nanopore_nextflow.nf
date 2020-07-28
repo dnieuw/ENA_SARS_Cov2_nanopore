@@ -41,7 +41,7 @@ params.OUTDIR = "results"
  * Trim 30 nucleotides of each end of the reads using cutadapt to ensure that primer derived sequences are not used to generate a consensus sequence
  */  
 process cut_adapters {
-    cpus 19 /* more is better, parallelizes quiet well*/
+    cpus 8 /* more is better, parallelizes quiet well*/
     memory '1 GB'
     container 'kfdrc/cutadapt'
     
@@ -64,8 +64,8 @@ process cut_adapters {
 process map_to_reference {
     publishDir params.OUTDIR, mode:'copy'
 
-    cpus 19 /* more is better, parallelizes very well*/
-    memory '10 GB'
+    cpus 8 /* more is better, parallelizes very well*/
+    memory '1 GB'
     container 'alexeyebi/ena-sars-cov2-nanopore'
     
     input:
@@ -112,7 +112,7 @@ process align_consensus {
     publishDir params.OUTDIR, mode:'copy'
 
     cpus 1 /* doesn't benefit from more cores*/
-    memory '10 GB'
+    memory '8 GB'
     container 'alexeyebi/ena-sars-cov2-nanopore'
     
     input:
