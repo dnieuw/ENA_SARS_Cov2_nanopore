@@ -43,6 +43,12 @@ parser.add_argument('-l',
                     type=int,
                     required=False)
 
+parser.add_argument('-n', 
+                    '--seq_name',
+                    help='Name of the sequence',
+                    type=str,
+                    required=False)
+
 args = parser.parse_args()
 
 def makeConsensus(bamfile, covlim):
@@ -87,7 +93,11 @@ def makeConsensus(bamfile, covlim):
             
             if len(consensus) == 0:
                 continue
-            all_ref.append('>'+ref+'_consensus\n'+''.join(consensus))
+            if args.seq_name == None:
+                all_ref.append('>'+ref+'_consensus\n'+''.join(consensus))
+            else:
+                all_ref.append('>'+args.seq_name+''.join(consensus))
+                
         return('\n'.join(all_ref))
 
 if __name__ == '__main__':
