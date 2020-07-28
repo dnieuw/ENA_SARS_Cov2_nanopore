@@ -106,7 +106,7 @@ process create_consensus {
     script:
     """
     samtools index -@ ${task.cpus} ${bam}
-    bam2consensus.py -i ${bam} -o {run_id}.fasta -d ${cov} -n ${name}
+    bam2consensus.py -i ${bam} -o ${run_id}.fasta -d ${cov} -n ${name}
     gzip -k ${run_id}.fasta
     """
 }
