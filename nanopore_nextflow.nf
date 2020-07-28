@@ -87,6 +87,7 @@ process map_to_reference {
  * Generate consensus genome from mapped reads
  */ 
 process create_consensus {
+    publishDir params.OUTDIR, mode:'copy'
     cpus 1
     memory '1 GB'
     container 'alexeyebi/ena-sars-cov2-nanopore'
@@ -94,6 +95,10 @@ process create_consensus {
     input:
     path bam from mapped_ch1
     val cov from params.COVERAGE
+    val name from params.NAME
+    val status from params.PIPELINE_FINISHED
+    val run_id from params.RUN
+    val field from params.PIPELINE_FIELD
     
     output:
     path 'consensus.fasta' into consensus_ch
@@ -101,35 +106,7 @@ process create_consensus {
     script:
     """
     samtools index -@ ${task.cpus} ${bam}
-    bam2consensus.py -i ${bam} -o consensus.fasta -d ${cov} -g 1
-    """
-}
-
-/*
- * Align consensus with reference to keep coordinates the same
- */ 
-process align_consensus {
-    publishDir params.OUTDIR, mode:'copy'
-
-    cpus 1 /* doesn't benefit from more cores*/
-    memory '10 GB'
-    container 'alexeyebi/ena-sars-cov2-nanopore'
-    
-    input:
-    path consensus from consensus_ch
-    path ref from params.REFERENCE
-    val name from params.NAME
-    val status from params.PIPELINE_FINISHED
-    val run_id from params.RUN
-    val field from params.PIPELINE_FIELD
-
-    output:
-    path "${run_id}.fasta.gz" into align_consensus_ch
-    path("${run_id}.fasta")
-    
-    script:
-    """
-    align_to_ref.py -i ${consensus} -o ${run_id}.fasta -r ${ref} -n ${name}
+    bam2consensus.py -i ${bam} -o {run_id}.fasta -d ${cov} -n ${name}
     gzip -k ${run_id}.fasta
     """
 }
