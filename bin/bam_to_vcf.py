@@ -1,13 +1,8 @@
 #!/usr/bin/env python3
 # Original author: David Newhouse
+import sys, re, argparse, multiprocessing, itertools, textwrap
 import pysam
-from pysam import VariantFile
-import sys
-import argparse
 from collections import Counter
-import re
-import multiprocessing
-import itertools
 from datetime import date
 
 parser = argparse.ArgumentParser(description='Primer validation')
@@ -52,23 +47,27 @@ parser.add_argument('-r',
                    required = True)
 
 args = parser.parse_args()
-
 insert_finder = re.compile("(.*)\+\d+(.*)")
 
+
 def print_header(ref, outfile):
-    print('##fileformat=VCFv4.0', file=outfile)
-    today = date.today()
-    print('##fileDate='+today.strftime("%Y%m%d"), file=outfile)
-    print('##source='+' '.join(sys.argv), file=outfile)
-    print('##reference='+ref, file=outfile)
-    print('##contig='+ref, file=outfile)
-    print("""##INFO=<ID=DP,Number=1,Type=Integer,Description="Raw Depth">
-##INFO=<ID=AF,Number=1,Type=Float,Description="Allele Frequency">
-##INFO=<ID=DP4,Number=4,Type=Integer,Description="Counts for ref-forward bases, ref-reverse, alt-forward and alt-reverse bases">
-##INFO=<ID=INDEL,Number=0,Type=Flag,Description="Indicates that the variant is an INDEL">""", file=outfile)
-    print('##FILTER=<ID=minaf'+str(args.minAF)+',Description="Allele frequency below indicated minimum">', file=outfile)
-    print('##FILTER=<ID=mindp'+str(args.mindepth)+',Description="Total depth below indicated minimum">', file=outfile)
-    print('#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO', file=outfile)
+    file_date = date.today().strftime("%Y%m%d")
+    columns = '\t'.join(["CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO"])
+    print(textwrap.dedent(f"""\
+        ##fileformat=VCFv4.0
+        ##fileDate={file_date}
+        ##source={' '.join(sys.argv)}
+        ##reference={ref}
+        ##contig={ref}
+        ##INFO=<ID=DP,Number=1,Type=Integer,Description="Raw Depth">
+        ##INFO=<ID=AF,Number=1,Type=Float,Description="Allele Frequency">
+        ##INFO=<ID=DP4,Number=4,Type=Integer,Description="Counts for ref-forward bases, ref-reverse, alt-forward and alt-reverse bases">
+        ##INFO=<ID=INDEL,Number=0,Type=Flag,Description="Indicates that the variant is an INDEL">
+        ##FILTER=<ID=minaf{args.minAF},Description="Allele frequency below indicated minimum">
+        ##FILTER=<ID=mindp{args.mindepth},Description="Total depth below indicated minimum">
+        #{columns}\
+        """), file=outfile)
+
 
 def work(start,stop):
     bamfile = pysam.AlignmentFile(args.bam, "rb")
@@ -77,8 +76,8 @@ def work(start,stop):
 
     return([parse_column(p.reference_pos, p.get_query_sequences(add_indels=True),p.get_num_aligned()) for p in pileup])
 
-def parse_column(ref_pos, allele_list, num_aln):
 
+def parse_column(ref_pos, allele_list, num_aln):
     if num_aln < args.mindepth:
         return(None)
 
@@ -136,6 +135,7 @@ def parse_column(ref_pos, allele_list, num_aln):
 
     return([str(num_aln), ref_pos, alleles, counts, alt_freq])
 
+
 if __name__ == '__main__':
     bamfile = pysam.AlignmentFile(args.bam, "rb")
     ref = bamfile.references[0]
@@ -173,5 +173,4 @@ if __name__ == '__main__':
 
                 #Print vcf lines, add 1 to the reference position to make the coordinates 1 based
                 print(ref, ref_pos+1, ".", alt[0], alt[1], ".", "PASS", "DP="+num_aln+";AF="+"{:.6f}".format(alt_freq[n])+";DP4="+counts[0]+","+counts[n]+indel, sep='\t', file=outfile)
-
 
