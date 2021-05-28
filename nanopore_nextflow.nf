@@ -83,6 +83,26 @@ process map_to_reference {
     """
 }
 
+
+process bam_to_vcf {
+    tag '$run_id'
+    publishDir params.OUTDIR, mode:'copy'
+    cpus 10
+
+    input:
+    path bam from mapped_ch1
+    path ref from params.REFERENCE
+    
+    output:
+    path "${run_id}.vcf" into vcf_ch
+
+    script:
+    """
+    bam_to_vcf.py -b ${bam} -r ${ref} --mindepth 30 --minAF 0.1 -c ${task.cpus} -o ${run_id}.vcf
+    """
+}
+
+
 /*
  * Generate consensus genome from mapped reads
  */ 
@@ -110,3 +130,4 @@ process create_consensus {
     gzip -k ${run_id}.fasta
     """
 }
+
