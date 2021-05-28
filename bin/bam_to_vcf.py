@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Original author: David Newhouse
 import pysam
 from pysam import VariantFile
 import sys
