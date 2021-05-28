@@ -102,32 +102,3 @@ process bam_to_vcf {
     """
 }
 
-
-/*
- * Generate consensus genome from mapped reads
- */ 
-process create_consensus {
-    publishDir params.OUTDIR, mode:'copy'
-    cpus 10
-    memory '20 GB'
-    container 'alexeyebi/ena-sars-cov2-nanopore'
-    
-    input:
-    path bam from mapped_ch1
-    val cov from params.COVERAGE
-    val name from params.NAME
-    val status from params.PIPELINE_FINISHED
-    val run_id from params.RUN
-    val field from params.PIPELINE_FIELD
-    
-    output:
-    path("${run_id}.fasta")
-    
-    script:
-    """
-    samtools index -@ ${task.cpus} ${bam}
-    bam2consensus.py -i ${bam} -o ${run_id}.fasta -d ${cov} -n ${name}
-    gzip -k ${run_id}.fasta
-    """
-}
-
