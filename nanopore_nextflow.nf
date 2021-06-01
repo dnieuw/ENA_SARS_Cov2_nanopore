@@ -92,6 +92,7 @@ process bam_to_vcf {
     input:
     path bam from mapped_ch1
     path ref from params.REFERENCE
+    val run_id from params.RUN
     
     output:
     path "${run_id}.vcf" into vcf_ch
