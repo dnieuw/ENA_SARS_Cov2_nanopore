@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Original author: David Newhouse
 import sys, re, argparse, multiprocessing, itertools, textwrap
-from pysam import AlignmentFile, FastaFile
+import pysam
 from collections import Counter
 from datetime import date
 
@@ -51,9 +51,9 @@ insert_finder = re.compile("(.*)\+\d+(.*)")
 
 
 def main():
-    bamfile = AlignmentFile(args.bam, "rb")
+    bamfile = pysam.AlignmentFile(args.bam, "rb")
     ref = bamfile.references[0]
-    reference_seq = Fastafile(args.reference).fetch(ref)
+    reference_seq = pysam.Fastafile(args.reference).fetch(ref)
 
     #Make an array of start-stop intervals to parallelize processing
     genome_length = len(reference_seq)
@@ -109,7 +109,7 @@ def print_header(ref, outfile):
 
 
 def work(start,stop):
-    bamfile = AlignmentFile(args.bam, "rb")
+    bamfile = pysam.AlignmentFile(args.bam, "rb")
     ref = bamfile.references[0]
     pileup = bamfile.pileup(ref, start=start, stop=stop, ignore_orphans=False, min_mapping_quality=0, min_base_quality=0)
 
