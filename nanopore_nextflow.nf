@@ -100,6 +100,7 @@ process bam_to_vcf {
 
     script:
     """
+    samtools index --threads ${task.cpus} ${bam}
     bam_to_vcf.py -b ${bam} -r ${ref} --mindepth 30 --minAF 0.1 -c ${task.cpus} -o ${run_id}.vcf
     """
 }
