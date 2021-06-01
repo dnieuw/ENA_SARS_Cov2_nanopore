@@ -50,45 +50,6 @@ args = parser.parse_args()
 insert_finder = re.compile("(.*)\+\d+(.*)")
 
 
-def main():
-    bamfile = pysam.AlignmentFile(args.bam, "rb")
-    ref = bamfile.references[0]
-    reference_seq = pysam.Fastafile(args.reference).fetch(ref)
-
-    #Make an array of start-stop intervals to parallelize processing
-    genome_length = len(reference_seq)
-    split = int(genome_length/args.cores)
-    split_ranges = [[i*split+1,(i+1)*split] for i in range(args.cores)]
-    #Adjust the last "stop" to be the genome length
-    split_ranges[-1][1] = genome_length
-
-    print("processing worklist")
-    with multiprocessing.Pool(processes=args.cores) as p:
-        resultlist = p.starmap(work, iter(split_ranges))
-
-    print("writing file")
-    with open(args.out,"w") as outfile:
-        print_header(ref, outfile)
-        for result in itertools.chain.from_iterable(resultlist):
-            if result == None:
-                continue
-            num_aln, ref_pos, allele, counts, alt_freq = result
-            for n,alt in enumerate(allele):
-                #Do not print reference allele as a variant
-                if alt[0]==alt[1]:
-                    continue
-
-                #Do not print minor alleles below 0.1%
-                if alt_freq[n] < args.minAF:
-                    continue
-
-                #Print an INDEL flag if the alt is an indel
-                indel = '' if (len(alt[0])+len(alt[1]))==2 else ';INDEL'
-
-                #Print vcf lines, add 1 to the reference position to make the coordinates 1 based
-                print(ref, ref_pos+1, ".", alt[0], alt[1], ".", "PASS", "DP="+num_aln+";AF="+"{:.6f}".format(alt_freq[n])+";DP4="+counts[0]+","+counts[n]+indel, sep='\t', file=outfile)
-
-
 def print_header(ref, outfile):
     file_date = date.today().strftime("%Y%m%d")
     columns = '\t'.join(["CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO"])
@@ -176,5 +137,40 @@ def parse_column(ref_pos, allele_list, num_aln):
 
 
 if __name__ == '__main__':
-    main()
+    bamfile = pysam.AlignmentFile(args.bam, "rb")
+    ref = bamfile.references[0]
+    reference_seq = pysam.Fastafile(args.reference).fetch(ref)
+
+    #Make an array of start-stop intervals to parallelize processing
+    genome_length = len(reference_seq)
+    split = int(genome_length/args.cores)
+    split_ranges = [[i*split+1,(i+1)*split] for i in range(args.cores)]
+    #Adjust the last "stop" to be the genome length
+    split_ranges[-1][1] = genome_length
+
+    print("processing worklist")
+    with multiprocessing.Pool(processes=args.cores) as p:
+        resultlist = p.starmap(work, iter(split_ranges))
+
+    print("writing file")
+    with open(args.out,"w") as outfile:
+        print_header(ref, outfile)
+        for result in itertools.chain.from_iterable(resultlist):
+            if result == None:
+                continue
+            num_aln, ref_pos, allele, counts, alt_freq = result
+            for n,alt in enumerate(allele):
+                #Do not print reference allele as a variant
+                if alt[0]==alt[1]:
+                    continue
+
+                #Do not print minor alleles below 0.1%
+                if alt_freq[n] < args.minAF:
+                    continue
+
+                #Print an INDEL flag if the alt is an indel
+                indel = '' if (len(alt[0])+len(alt[1]))==2 else ';INDEL'
+
+                #Print vcf lines, add 1 to the reference position to make the coordinates 1 based
+                print(ref, ref_pos+1, ".", alt[0], alt[1], ".", "PASS", "DP="+num_aln+";AF="+"{:.6f}".format(alt_freq[n])+";DP4="+counts[0]+","+counts[n]+indel, sep='\t', file=outfile)
 
