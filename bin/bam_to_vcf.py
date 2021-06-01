@@ -65,7 +65,7 @@ def print_header(ref, outfile):
         ##INFO=<ID=INDEL,Number=0,Type=Flag,Description="Indicates that the variant is an INDEL">
         ##FILTER=<ID=minaf{args.minAF},Description="Allele frequency below indicated minimum">
         ##FILTER=<ID=mindp{args.mindepth},Description="Total depth below indicated minimum">
-        #{columns}
+        #{columns}\
         """), file=outfile)
 
 
