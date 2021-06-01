@@ -88,6 +88,8 @@ process bam_to_vcf {
     tag '$run_id'
     publishDir params.OUTDIR, mode:'copy'
     cpus 10
+    memory: '20 GB'
+    container 'rmwthorne/ena-sars-cov2-nanopore'
 
     input:
     path bam from mapped_ch1
