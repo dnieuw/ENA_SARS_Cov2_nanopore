@@ -104,7 +104,7 @@ process bam_to_vcf {
 
     input:
     path bam from sars2_aligned_reads_ch2
-    path ref from params.REFERENCE
+    path ref from params.SARS2_FA
     val run_id from params.RUN_ID
     
     output:
