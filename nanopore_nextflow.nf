@@ -7,47 +7,19 @@
  */
 
 params.COVERAGE = 30
-params.PIPELINE_STARTED = "pipeline_started"
-params.PIPELINE_FINISHED = "pipeline_finished"
-params.PIPELINE_FIELD = "pipeline_analysis"
-params.EXPORT_STARTED = "export_started"
-params.EXPORT_FINISHED = "export_finished"
-params.EXPORT_FIELD = "export_to_ena"
 params.OUTDIR = "results"
 
-/*
- * Report to mongodb that pipeline started
- */
- process report_pipeline_started {
-     cpus 1
-     memory '1 GB'
-     container 'alexeyebi/ena-sars-cov2-nanopore'
-
-     input:
-     val run_id from params.RUN
-     val status from params.PIPELINE_STARTED
-     val field from params.PIPELINE_FIELD
-
-     output:
-     path 'pipeline_started.log' into pipeline_started_ch
-
-     script:
-     """
-     touch pipeline_started.log
-     """
- }
 
 /*
  * Trim 30 nucleotides of each end of the reads using cutadapt to ensure that primer derived sequences are not used to generate a consensus sequence
  */  
 process cut_adapters {
-    cpus 10 /* more is better, parallelizes quiet well*/
-    memory '20 GB'
+    cpus 19
+    memory '30 GB'
     container 'kfdrc/cutadapt'
     
     input:
     path input_file from params.INPUT
-    path pipeline_started from pipeline_started_ch
     
     output:
     path 'trimmed.fastq' into trimmed_ch
@@ -64,17 +36,17 @@ process cut_adapters {
 process map_to_reference {
     publishDir params.OUTDIR, mode:'copy'
 
-    cpus 10 /* more is better, parallelizes very well*/
-    memory '20 GB'
+    cpus 19 /* more is better, parallelizes very well*/
+    memory '30 GB'
     container 'alexeyebi/ena-sars-cov2-nanopore'
     
     input:
     path trimmed from trimmed_ch
     path ref from params.REFERENCE
-    val run_id from params.RUN
+    val run_id from params.RUN_ID
     
     output:
-    path "${run_id}.bam" into mapped_ch1, mapped_ch2, mapped_ch3
+    path "${run_id}.bam" into mapped_ch
     path("${run_id}.bam")
     
     script:
@@ -91,9 +63,9 @@ process bam_to_vcf {
     container 'rmwthorne/ena-sars-cov2-nanopore'
 
     input:
-    path bam from mapped_ch1
+    path bam from mapped_ch
     path ref from params.REFERENCE
-    val run_id from params.RUN
+    val run_id from params.RUN_ID
     
     output:
     path "${run_id}.vcf" into vcf_ch
@@ -105,3 +77,24 @@ process bam_to_vcf {
     """
 }
 
+process annotate_snps {
+    publishDir params.OUTDIR, mode:'copy'
+    cpus 1
+    memory '30 GB'
+    container 'alexeyebi/snpeff'
+
+    input:
+    path vcf from vcf_ch
+    val run_id from params.RUN_ID
+
+    output:
+    path("${run_id}.annot.vcf")
+
+    script:
+    """
+    zcat ${vcf} | sed "s/^NC_045512.2/NC_045512/" > \
+    ${run_id}.newchr.vcf
+    java -Xmx4g -jar /data/tools/snpEff/snpEff.jar -v -s ${run_id}.snpEff_summary.html sars.cov.2 \
+    ${run_id}.newchr.vcf > ${run_id}.annot.vcf
+    """
+}
