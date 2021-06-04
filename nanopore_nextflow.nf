@@ -94,7 +94,6 @@ process annotate_snps {
     """
     zcat ${vcf} | sed "s/^NC_045512.2/NC_045512/" > \
     ${run_id}.newchr.vcf
-    java -Xmx4g -jar /data/tools/snpEff/snpEff.jar -v -s ${run_id}.snpEff_summary.html sars.cov.2 \
-    ${run_id}.newchr.vcf > ${run_id}.annot.vcf
+    java -Xmx4g -jar /data/tools/snpEff/snpEff.jar -q -no-downstream -no-upstream -noStats sars.cov.2 ${run_id}.newchr.vcf > ${run_id}.annot.vcf
     """
 }
