@@ -71,7 +71,7 @@ process check_coverage {
 
     script:
     """
-    samtools mpileup -a -A -Q 30 -d 8000 -f ${sars2_fasta} ${bam} > \
+    samtools mpileup -a -A -Q 0 -d 8000 -f ${sars2_fasta} ${bam} > \
     ${run_id}.pileup
     """
 }
