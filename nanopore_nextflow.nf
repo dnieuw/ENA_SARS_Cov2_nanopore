@@ -6,9 +6,8 @@
  * thresholds set for the consensus calling
  */
 
-params.COVERAGE = 30
 params.OUTDIR = "results"
-
+params.SARS2_FA = "/data/ref/sars2/fa/NC_045512.2.fa"
 
 /*
  * Trim 30 nucleotides of each end of the reads using cutadapt to ensure that primer derived sequences are not used to generate a consensus sequence
@@ -42,11 +41,11 @@ process map_to_reference {
     
     input:
     path trimmed from trimmed_ch
-    path ref from params.REFERENCE
+    path ref from params.SARS2_FA
     val run_id from params.RUN_ID
     
     output:
-    path "${run_id}.bam" into mapped_ch
+    path "${run_id}.bam" into sars2_aligned_reads_ch, sars2_aligned_reads_ch2
     path("${run_id}.bam")
     
     script:
@@ -55,15 +54,56 @@ process map_to_reference {
     """
 }
 
+process check_coverage {
+    publishDir params.OUTDIR, mode:'copy'
+    cpus 1
+    memory '10 GB'
+    container 'alexeyebi/bowtie2_samtools'
+
+    input:
+    path bam from sars2_aligned_reads_ch
+    val run_id from params.RUN_ID
+    path sars2_fasta from params.SARS2_FA
+
+    output:
+    path "${run_id}.pileup" into check_coverage_ch
+    path("${run_id}.pileup")
+
+    script:
+    """
+    samtools mpileup -a -A -Q 30 -d 8000 -f ${sars2_fasta} ${bam} > \
+    ${run_id}.pileup
+    """
+}
+
+process make_small_file_with_coverage {
+    publishDir params.OUTDIR, mode:'copy'
+    cpus 1
+    memory '10 GB'
+    container 'alexeyebi/bowtie2_samtools'
+
+    input:
+    path pileup from check_coverage_ch
+    val run_id from params.RUN_ID
+
+    output:
+    path("${run_id}.coverage")
+
+    script:
+    """
+    cat ${pileup} | awk '{print \$2,","\$3,","\$4}' > ${run_id}.coverage
+    """
+}
+
 
 process bam_to_vcf {
     tag '$run_id'
     publishDir params.OUTDIR, mode:'copy'
     cpus 10
-    container 'rmwthorne/ena-sars-cov2-nanopore'
+    container 'alexeyebi/ena-sars-cov2-nanopore'
 
     input:
-    path bam from mapped_ch
+    path bam from sars2_aligned_reads_ch2
     path ref from params.REFERENCE
     val run_id from params.RUN_ID
     
