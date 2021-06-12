@@ -57,7 +57,7 @@ process map_to_reference {
 process check_coverage {
     publishDir params.OUTDIR, mode:'copy'
     cpus 1
-    memory '10 GB'
+    memory '30 GB'
     container 'alexeyebi/bowtie2_samtools'
 
     input:
@@ -79,7 +79,7 @@ process check_coverage {
 process make_small_file_with_coverage {
     publishDir params.OUTDIR, mode:'copy'
     cpus 1
-    memory '10 GB'
+    memory '30 GB'
     container 'alexeyebi/bowtie2_samtools'
 
     input:
@@ -100,6 +100,7 @@ process bam_to_vcf {
     tag '$run_id'
     publishDir params.OUTDIR, mode:'copy'
     cpus 10
+    memory '30 GB'
     container 'alexeyebi/ena-sars-cov2-nanopore'
 
     input:
