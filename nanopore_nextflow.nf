@@ -7,7 +7,8 @@
  */
 
 params.OUTDIR = "results"
-params.SARS2_FA = "/data/ref/sars2/fa/NC_045512.2.fa"
+params.SARS2_FA = "/data/ref/NC_045512.2.fa"
+params.SARS2_FA_FAI = "/data/ref/NC_045512.2.fa.fai"
 
 /*
  * Trim 30 nucleotides of each end of the reads using cutadapt to ensure that primer derived sequences are not used to generate a consensus sequence
@@ -88,6 +89,7 @@ process make_small_file_with_coverage {
 
     output:
     path("${run_id}.coverage")
+    path "${run_id}.coverage" into coverage_ch
 
     script:
     """
@@ -109,12 +111,16 @@ process bam_to_vcf {
     val run_id from params.RUN_ID
     
     output:
-    path "${run_id}.vcf" into vcf_ch
+    path "${run_id}.vcf.gz" into vcf_ch, vcf_ch2
+    path("${run_id}_filtered.vcf.gz")
 
     script:
     """
     samtools index -@ ${task.cpus} ${bam}
     bam_to_vcf.py -b ${bam} -r ${ref} --mindepth 30 --minAF 0.1 -c ${task.cpus} -o ${run_id}.vcf
+    filtervcf.py -i ${run_id}.vcf -o ${run_id}_filtered.vcf
+    bgzip ${run_id}.vcf
+    bgzip ${run_id}_filtered.vcf
     """
 }
 
@@ -133,8 +139,32 @@ process annotate_snps {
 
     script:
     """
-    cat ${vcf} | sed "s/^NC_045512.2/NC_045512/" > \
+    zcat ${vcf} | sed "s/^NC_045512.2/NC_045512/" > \
     ${run_id}.newchr.vcf
     java -Xmx4g -jar /data/tools/snpEff/snpEff.jar -q -no-downstream -no-upstream -noStats sars.cov.2 ${run_id}.newchr.vcf > ${run_id}.annot.vcf
+    """
+}
+
+process create_consensus_sequence {
+    publishDir params.OUTDIR, mode:'copy'
+    cpus 1
+    memory '30 GB'
+    container 'alexeyebi/ena-sars-cov2-nanopore'
+
+    input:
+    path vcf from vcf_ch2
+    val run_id from params.RUN_ID
+    path sars2_fasta from params.SARS2_FA
+    path sars2_fasta_fai from params.SARS2_FA_FAI
+    path coverage from coverage_ch
+
+    output:
+    path("${run_id}_consensus.fasta.gz")
+
+    script:
+    """
+    tabix ${vcf}
+    vcf2consensus.py -v ${vcf} -d ${coverage} -r ${sars2_fasta} -o ${run_id}_consensus.fasta -dp 30 -n ${run_id}
+    bgzip ${run_id}_consensus.fasta
     """
 }
