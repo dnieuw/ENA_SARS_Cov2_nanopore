@@ -112,7 +112,7 @@ process bam_to_vcf {
     
     output:
     path "${run_id}.vcf.gz" into vcf_ch, vcf_ch2
-    path("${run_id}_filtered.vcf.gz")
+    path("${run_id}_filtered.vcf.gz") into vcf_filt
 
     script:
     """
@@ -152,7 +152,7 @@ process create_consensus_sequence {
     container 'alexeyebi/ena-sars-cov2-nanopore'
 
     input:
-    path vcf from vcf_ch2
+    path vcf from vcf_filt
     val run_id from params.RUN_ID
     path sars2_fasta from params.SARS2_FA
     path sars2_fasta_fai from params.SARS2_FA_FAI
